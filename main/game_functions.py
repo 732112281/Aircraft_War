@@ -9,49 +9,93 @@ from moudle.enemy import Enemy
 from moudle.ufo import Ufo
 
 spawn_enemy_ticks = shoot_ticks = spawn_ufo_ticks = 0
-def check_keydown(event, ship):
+def check_keydown(event, settings, game_starts, scoreboard, ship, bullets, 
+                  enemies, down_enemies, ufos, active_ufos):
     """检测键盘被按下"""
     #英雄机移动
-    if event.key == K_a or event.key == K_LEFT:
+    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
         ship.offset['move_left'] = ship.speed_factor
-    if event.key == K_d or event.key == K_RIGHT:
+    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
         ship.offset['move_right'] = ship.speed_factor
-    if event.key == K_w or event.key == K_UP:
+    if event.key == pygame.K_w or event.key == pygame.K_UP:
         ship.offset['move_up'] = ship.speed_factor
-    if event.key == K_s or event.key == K_DOWN:
+    if event.key == pygame.K_s or event.key == pygame.K_DOWN:
         ship.offset['move_down'] = ship.speed_factor
     #游戏处理
-    if event.key == K_ESCAPE:
+    if event.key == pygame.K_ESCAPE:
         pygame.quit()
         exit() 
-        
+    #按空格暂停,按任意键恢复
+    if event.key == pygame.K_SPACE and game_starts.game_active:
+        game_starts.game_stop = not game_starts.game_stop
+    elif game_starts.game_active and game_starts.game_stop:
+        game_starts.stop = False
+    if not game_starts.game_active:
+        game_starts.game_active = True
+        game_starts.stop = False
+    #按R键重新开始
+    if event.key == pygame.K_r:
+        game_starts.reset_game(settings, bullets, enemies, 
+                               down_enemies, ufos, active_ufos)
+        game_starts.game_active = False
+        game_starts.game_stop = True
+        scoreboard.prep_score()
 def check_keyup(event, ship):
     """检测键盘空闲"""
-    if event.key == K_a or event.key == K_LEFT:
+    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
         ship.offset['move_left'] = 0
-    if event.key == K_d or event.key == K_RIGHT:
+    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
         ship.offset['move_right'] = 0
-    if event.key == K_w or event.key == K_UP:
+    if event.key == pygame.K_w or event.key == pygame.K_UP:
         ship.offset['move_up'] = 0
-    if event.key == K_s or event.key == K_DOWN:
+    if event.key == pygame.K_s or event.key == pygame.K_DOWN:
         ship.offset['move_down'] = 0
         
-def check_events(ship):
+def check_events(settings, game_starts, scoreboard, ship, buttons, bullets, 
+                 enemies, down_enemies, ufos, active_ufos):
+    mouse_x, mouse_y = pygame.mouse.get_pos()
     """监听键盘事件"""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+        #检测鼠标按下
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for button in buttons:
+                if button.rect.collidepoint(mouse_x, mouse_y):
+                    if button.ID == 0 \
+                        and button.active_blit == game_starts.game_active:
+                        game_starts.game_active = True
+                        game_starts.game_stop = False
+                        game_starts.reset_game(settings, bullets, enemies, 
+                                               down_enemies, ufos, active_ufos)
+                        scoreboard.prep_score()
+                    elif button.ID == 1 \
+                        and button.stop_blit == game_starts.game_stop:
+                        game_starts.game_stop = True
+                    elif button.ID == 2 \
+                        and button.stop_blit == game_starts.game_stop:
+                        game_starts.game_stop = False
         #监听键盘被按下
         if event.type == pygame.KEYDOWN:
-            check_keydown(event, ship)
+            check_keydown(event, settings, game_starts, scoreboard, ship, 
+                          bullets, enemies, down_enemies, ufos, active_ufos)
         #监听键盘空闲
         elif event.type == pygame.KEYUP:
             check_keyup(event, ship)
-        if event.type == VIDEORESIZE:
+        if event.type == pygame.VIDEORESIZE:
             SCREEN_SIZE = event.size
             pygame.display.set_mode(SCREEN_SIZE, RESIZABLE)
-
+    #当鼠标在button上时,切换图像
+    button_change_image(mouse_x, mouse_y, buttons)
+    
+def button_change_image(mouse_x, mouse_y, buttons):
+    """当鼠标在button上时,切换图像"""
+    for button in [Button for Button in buttons 
+                    if Button.down_msg_image or Button.down_image]:
+        button_down = button.rect.collidepoint(mouse_x, mouse_y)
+        button.change_image(button_down)
+            
 def is_ActionTime(ticks, interval):
     """检测时间间隔"""
     return ticks % interval == 0
@@ -114,13 +158,15 @@ def spawn_ufo(settings, screen, ufos):
         new_ufo2=Ufo(settings, screen, randint, 2)
         ufos.add(new_ufo2)
 
-def check_collide(game_starts, hero, enemies, down_enemies, 
+def check_collide(game_starts, scoreboard, hero, enemies, down_enemies, 
                   bullets, ufos, active_ufos):
     """碰撞检测"""
     bm_collisions = pygame.sprite.groupcollide(enemies, bullets, False, True)
     for enemy in bm_collisions:
         enemy.life -= game_starts.bullet_damage
         if enemy.life <= 0:
+            game_starts.scores += enemy.score
+            scoreboard.prep_score()
             enemy.kill()
             down_enemies.add(enemy)
         elif enemy.life > 0:
@@ -135,24 +181,34 @@ def check_collide(game_starts, hero, enemies, down_enemies,
                      if same_ufo.type == ufo.type]
         if same_ufos:
             for same_ufo in same_ufos:
-                active_ufos.remove(same_ufo)
+                same_ufo.kill()
                 active_ufos.add(ufo)
         else:
             active_ufos.add(ufo)
         
-def surface(screen, bg, hero, bullets, 
-            enemies, down_enemies, ufos, active_ufos):
+def surface(game_starts, screen, bg, hero, bullets, enemies, down_enemies, 
+            ufos, active_ufos, scoreboard, buttons):
     """绘制各个Group中对象"""
     bg.draw()
-    bullets.draw(screen)
-    hero.blitme()
-    enemies.draw(screen)
-    down_enemies.draw(screen)
-    ufos.draw(screen)
-
+    if game_starts.game_active:
+        bullets.draw(screen)
+        hero.draw()
+        enemies.draw(screen)
+        down_enemies.draw(screen)
+        ufos.draw(screen)
+        scoreboard.draw()
+    for button in [Button for Button in buttons 
+                   if Button.active_blit == game_starts.game_active 
+                      and Button.stop_blit == game_starts.game_stop]:
+        button.draw(scoreboard.score_rect)
+    pygame.display.flip()
+    pygame.time.Clock().tick(game_starts.hightest_ticks 
+                             * game_starts.rander_speed)
 def update(game_starts, bg, hero, bullets, 
            enemies, down_enemies, ufos, active_ufos):
     """调用各个Sprite及Group的update方法"""
+    if not game_starts.game_active or game_starts.game_stop:
+        return 
     bg.update()
     hero.update()
     bullets.update()
@@ -164,10 +220,7 @@ def update(game_starts, bg, hero, bullets,
         enemy.enemy3_image_update()
     for enemy in down_enemies.sprites():
         enemy.bomb_update()
-    pygame.display.flip()
-    pygame.time.Clock().tick(game_starts.hightest_ticks 
-                             * game_starts.rander_speed)
-
+    
 def set_PFS(game_starts, screen, FPS):
     """调整游戏帧率"""
     screen_width = screen.get_rect().width

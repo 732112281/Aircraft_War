@@ -29,14 +29,10 @@ class Hero():
             down_image = down_image.convert_alpha()
         self.down_images = self.settings.ship_down_images
         
-    def blitme(self):
+    def draw(self):
         """在指定位置绘制飞船"""
         self.screen.blit(self.image, self.rect)
-        for value in self.offset.values():
-            if value != 0:
-                self.image = self.images[1]
-            else:
-                self.image =self.images[0]
+        
         
     def center_ship(self):
         """将飞船放在屏幕底部中央"""
@@ -50,6 +46,12 @@ class Hero():
         #更新表示敌飞船位置的小数值
         self.x = self.x + self.offset['move_right'] - self.offset['move_left']
         self.y = self.y + self.offset['move_down'] - self.offset['move_up']
+        #根据移动标志调整图片
+        for value in self.offset.values():
+            if value != 0:
+                self.image = self.images[1]
+            else:
+                self.image =self.images[0]
         '''限制飞船活动范围'''
         #更新screen实例的rect属性
         self.screen_rect = self.screen.get_rect()

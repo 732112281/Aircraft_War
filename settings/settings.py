@@ -3,9 +3,7 @@ import pygame
 from sys import path
 path.append('../')
 class Settings():
-    """储存《飞机大战》中所有设置的类
-        初始化游戏的设置
-    """
+    """储存《飞机大战》中所有设置的类"""
     
     '''游戏设置'''
     
@@ -38,8 +36,23 @@ class Settings():
     button_up_color = (195, 200, 201)
     #按钮中文本颜色
     button_text_color = (99, 102, 103)
+    #按钮字体种类
+    button_font_kind = None
     #按钮中文本大小
     button_font_size = 60
+    
+    '''计分板设置'''
+    
+    #计分板字体颜色
+    scoreboard_text_color = (230, 230, 230)
+    #计分板字体种类
+    scoreboard_font_kind = None
+    #计分板字体大小
+    scoreboard_font_size =48
+    #飞船初始生命值
+    lifes = 3
+    #初始分数
+    scores = 0
     
     '''飞船设置'''
     
@@ -47,10 +60,6 @@ class Settings():
     ship_speed_factor = 3
     #射击间隔
     shoot_interval = 10
-    #飞船初始生命值
-    ship_lifes = 3
-    #初始分数
-    ship_scores = 0
     #飞船爆炸动画每帧持续时间
     ship_bomb_everyticktime = 5
     '飞船图片'
@@ -160,3 +169,6 @@ class Settings():
     enemy3_down_images.append(pygame.image.load("images/enemy3_down4.png"))
     enemy3_down_images.append(pygame.image.load("images/enemy3_down5.png"))
     enemy3_down_images.append(pygame.image.load("images/enemy3_down6.png"))
+
+if __name__ == '__main__':
+    settings = Settings()

@@ -55,9 +55,9 @@ class Ufo(Sprite):
         """道具激活后的效果"""
         if self.activetime > self.keeptime:
             if self.type == 1:
-                game_starts.bullet_damage = 1
+                game_starts.bullet_damage = self.settings.bullet_damage
             elif self.type == 2:
-                game_starts.bullet_line = 1
+                game_starts.bullet_line = self.settings.bullet_line
             self.kill()
         if self.activetime == 0:
             if self.type == 1:
