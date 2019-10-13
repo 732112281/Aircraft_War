@@ -72,6 +72,7 @@ class Button(object):
         self.set_rect()
         
     def set_rect(self):
+        """设置button对象的rect属性"""
         if self.msg and self.image:
             if self.msg_rect.height > self.image_rect.height and \
                 self.msg_rect.width > self.image_rect.width:
@@ -85,6 +86,7 @@ class Button(object):
             self.rect = self.image_rect 
             
     def change_image(self, button_down):
+        """button对象被按下时切换图片"""
         if button_down:
             if not (self.up_bg_color or self.down_bg_color):
                 self.image = self.down_image
@@ -97,6 +99,7 @@ class Button(object):
                 self.msg_image = self.up_msg_image
                 
     def update(self, score_rect):
+        """设置button对象的位置"""
         self.screen_rect = self.screen.get_rect()
         if self.ID == 0:
             self.rect.centerx = self.screen_rect.centerx

@@ -1,9 +1,10 @@
 #coding:utf-8
 class Hero():
-    def __init__(self,settings, screen):
+    def __init__(self,settings, game_starts, screen):
         """初始化飞船并设置其初始位置"""
         self.screen = screen
         self.settings = settings
+        self.game_starts = game_starts
         #加载飞船图片
         self.init_image()
         #获取飞船图片和screen实例的rect属性
@@ -17,8 +18,15 @@ class Hero():
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
         #移动标志
-        self.offset={'move_left':0, 'move_right':0,
-                     'move_up':0, 'move_down':0}
+        self.offset={'move_left':0, 'move_right':0, 'move_up':0, 'move_down':0}
+        #无敌标志
+        self.Invincible = False
+        #无敌时间
+        self.Invincible_time = game_starts.ship_Invincible_time * 7
+        #无敌时动画每一帧时间
+        self.Invincible_everyticktime = \
+        settings.ship_Invincible_everyticktime * 2
+
     def init_image(self):
         """初始化飞船图片"""
         for img in self.settings.ship_images:
@@ -31,13 +39,21 @@ class Hero():
         
     def draw(self):
         """在指定位置绘制飞船"""
-        self.screen.blit(self.image, self.rect)
+        if self.Invincible_time % self.Invincible_everyticktime <= \
+            self.Invincible_everyticktime / 2:
+            self.screen.blit(self.image, self.rect)
         
         
     def center_ship(self):
-        """将飞船放在屏幕底部中央"""
-        self.rect.centerx = self.screen_rect.centerx
-        self.rect.bottom = self.screen_rect.bottom
+        """将飞船放在屏幕底部中央,并重置飞船无敌状态"""
+        self.rect.midbottom = self.screen_rect.midbottom
+        #用小数值存储飞船坐标
+        self.x = float(self.rect.x)
+        self.y = float(self.rect.y)
+        #无敌标志
+        self.Invincible = False
+        #无敌时间
+        self.Invincible_time = self.game_starts.ship_Invincible_time * 7
         
     def update(self):
         """更新飞船的rect属性"""
@@ -67,3 +83,12 @@ class Hero():
         #更新表示飞船位置的rect属性
         self.rect.x = self.x
         self.rect.y = self.y
+    
+    def Invincible_update(self):
+        """无敌时间动画"""
+        if not self.Invincible:
+            return 
+        self.Invincible_time -= 1
+        if self.Invincible_time < 0:
+            self.Invincible_time = self.game_starts.ship_Invincible_time * 7
+            self.Invincible = False

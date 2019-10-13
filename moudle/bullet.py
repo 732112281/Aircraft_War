@@ -13,7 +13,7 @@ class Bullet(Sprite):
         #初始化子弹设置
         self.init(game_starts, hero ,difference, new_bullet_centerx)
         #加载子弹移动速度
-        self.speed_factor = settings.bullet_speed_factor
+        self.speed_factor = game_starts.bullet_speed_factor
         #用小数值存储子弹坐标
         self.rect.centerx = self.centerx
         self.y = float(self.rect.y)

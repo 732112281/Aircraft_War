@@ -1,10 +1,11 @@
 #coding:utf-8
 from pygame.sprite import Sprite
 class Ufo(Sprite):
-    def __init__(self, settings, screen, randint, type):
+    def __init__(self, settings, game_starts, screen, randint, type):
         super().__init__()
-        self.type=type
+        self.type = type
         self.settings = settings
+        self.game_starts = game_starts
         self.screen = screen
         self.activetime = 0
         #初始化道具设置
@@ -25,18 +26,18 @@ class Ufo(Sprite):
         """初始化道具各项属性"""
         if self.type == 1:
             #道具1速度
-            self.speed_factor = self.settings.ufo2_speed_factor
+            self.speed_factor = self.game_starts.ufo1_speed_factor
             #道具1图片
             self.image = self.settings.ufo_images[0].convert_alpha()
             #道具1效果持续时间
-            self.keeptime = self.settings.ufo1_keeptime * 30
+            self.keeptime = self.game_starts.ufo1_keeptime * 30
         elif self.type == 2:
             #道具2速度
-            self.speed_factor = self.settings.ufo2_speed_factor
+            self.speed_factor = self.game_starts.ufo2_speed_factor
             #道具2图片
             self.image = self.settings.ufo_images[1].convert_alpha()
             #道具2效果持续时间
-            self.keeptime = self.settings.ufo2_keeptime * 30
+            self.keeptime = self.game_starts.ufo2_keeptime * 30
     
     def update(self):
         """向下移动道具"""
@@ -54,10 +55,7 @@ class Ufo(Sprite):
     def active_effect(self, game_starts):
         """道具激活后的效果"""
         if self.activetime > self.keeptime:
-            if self.type == 1:
-                game_starts.bullet_damage = self.settings.bullet_damage
-            elif self.type == 2:
-                game_starts.bullet_line = self.settings.bullet_line
+            self.reset(game_starts)
             self.kill()
         if self.activetime == 0:
             if self.type == 1:
@@ -67,3 +65,11 @@ class Ufo(Sprite):
             self.activetime += 1
         elif self.activetime > 0:
             self.activetime +=1
+    
+    def reset(self, game_starts):
+        """重置被效果更改后的设置"""
+        if self.type == 1:
+            game_starts.bullet_damage = self.settings.bullet_damage
+        elif self.type == 2:
+            game_starts.bullet_line = self.settings.bullet_line
+        
