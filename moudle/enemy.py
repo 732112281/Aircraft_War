@@ -1,5 +1,14 @@
 #coding:utf-8
 from pygame.sprite import Sprite
+import pygame.draw
+
+def Debug_draw(func):
+    def Debug_func(self):
+        func(self)
+        if(self.settings.Debug):
+            pygame.draw.rect(self.screen,0xFFFFFF,self.rect,2)
+    return Debug_func
+
 class Enemy(Sprite):
     """表示单个敌人的类"""
     def __init__(self, settings, game_starts, screen, randint, type):
@@ -95,6 +104,9 @@ class Enemy(Sprite):
             #设置敌飞船移动动画时间初始值
             self.move_tick = 0
     
+    
+    
+    @Debug_draw
     def update(self):
         """调用各个update方法"""
         self.hit_update()
@@ -110,6 +122,7 @@ class Enemy(Sprite):
             self.rect.x > self.screen_rect.width:
             self.kill()
     
+    @Debug_draw
     def hit_update(self):
         """被击中动画"""
         if self.been_hit and self.hit_change_time:
@@ -120,7 +133,8 @@ class Enemy(Sprite):
                 self.image = self.images[0]
                 self.been_hit =False
                 self.hit_ticks = 0
-            
+    
+    @Debug_draw   
     def bomb_update(self):
         """爆炸动画"""
         self.bomb_ticks += 1
@@ -130,7 +144,8 @@ class Enemy(Sprite):
                                                // self.bomb_everyticktime - 1]
             except IndexError:
                 self.kill()
-    
+
+    @Debug_draw
     def enemy3_image_update(self):
         """敌飞船3移动动画"""
         if len(self.images) > 2:
@@ -141,3 +156,4 @@ class Enemy(Sprite):
                     self.move_tick = 0
                 elif self.move_tick == self.enemy_move_everyticktime // 2:
                     self.image = self.images[1]
+

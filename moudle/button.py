@@ -3,7 +3,7 @@ import pygame.font
 class Button(object):
     """有关按钮的类"""
     
-    def __init__(self, settings, screen, ID, active_blit=False, stop_blit=True, \
+    def __init__(self, settings, screen, ID, active_blit=False, stop_blit=True,
                  msg=None, up_bg_color=None, down_bg_color=None, bg_size=None,
                  up_image=None, down_image=None, ):
         """初始化与按钮有关的属性"""

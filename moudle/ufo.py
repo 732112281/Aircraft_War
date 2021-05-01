@@ -59,17 +59,18 @@ class Ufo(Sprite):
             self.kill()
         if self.activetime == 0:
             if self.type == 1:
-                game_starts.bullet_damage = 5
+                game_starts.bullet_damage *= 4
             elif self.type == 2:
-                game_starts.bullet_line = 2
-            self.activetime += 1
+                game_starts.bullet_line += 2
+            self.activetime = 1
         elif self.activetime > 0:
             self.activetime +=1
     
     def reset(self, game_starts):
         """重置被效果更改后的设置"""
         if self.type == 1:
-            game_starts.bullet_damage = self.settings.bullet_damage
+#            game_starts.bullet_damage = self.settings.bullet_damage
+            game_starts.bullet_damage /= 4
         elif self.type == 2:
-            game_starts.bullet_line = self.settings.bullet_line
-        
+#            game_starts.bullet_line = self.settings.bullet_line
+            game_starts.bullet_line -= 2

@@ -1,4 +1,8 @@
 #coding:utf-8
+from pygame import Rect
+import pygame.draw
+#import pygame
+
 class Hero():
     def __init__(self,settings, game_starts, screen):
         """初始化飞船并设置其初始位置"""
@@ -9,6 +13,10 @@ class Hero():
         self.init_image()
         #获取飞船图片和screen实例的rect属性
         self.rect = self.image.get_rect()
+        self.rects = []
+        self.rects.append(Rect(0,0,32,44))
+        self.rects.append(Rect(0,0,98,52))
+        
         self.screen_rect = self.screen.get_rect()
         #初始化飞船位置
         self.center_ship()
@@ -22,7 +30,7 @@ class Hero():
         #无敌标志
         self.Invincible = False
         #无敌时间
-        self.Invincible_time = game_starts.ship_Invincible_time * 7
+        self.Invincible_time = game_starts.ship_Invincible_time * 5
         #无敌时动画每一帧时间
         self.Invincible_everyticktime = \
         settings.ship_Invincible_everyticktime * 2
@@ -40,8 +48,11 @@ class Hero():
     def draw(self):
         """在指定位置绘制飞船"""
         if self.Invincible_time % self.Invincible_everyticktime <= \
-            self.Invincible_everyticktime / 2:
+            self.Invincible_everyticktime / 2 or not self.Invincible:
             self.screen.blit(self.image, self.rect)
+        if(self.settings.Debug):
+            for h_rect in self.rects:
+                pygame.draw.rect(self.screen,0xFFFFFF,h_rect,2)
         
         
     def center_ship(self):
@@ -53,7 +64,7 @@ class Hero():
         #无敌标志
         self.Invincible = False
         #无敌时间
-        self.Invincible_time = self.game_starts.ship_Invincible_time * 7
+        self.Invincible_time = self.game_starts.ship_Invincible_time * 5
         
     def update(self):
         """更新飞船的rect属性"""
@@ -83,12 +94,14 @@ class Hero():
         #更新表示飞船位置的rect属性
         self.rect.x = self.x
         self.rect.y = self.y
-    
+        #更新碰撞箱位置
+        self.rects[0].midtop = self.rect.midtop
+        self.rects[1].midtop = self.rects[0].midbottom
+
     def Invincible_update(self):
-        """无敌时间动画"""
+        """更新无敌时间"""
         if not self.Invincible:
             return 
         self.Invincible_time -= 1
         if self.Invincible_time < 0:
-            self.Invincible_time = self.game_starts.ship_Invincible_time * 7
             self.Invincible = False

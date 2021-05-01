@@ -1,21 +1,22 @@
 #coding:utf-8
 import pygame
-from sys import path
-path.append('../')
+#import os
+#os.chdir(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0])
 class Settings():
     """储存《飞机大战》中所有设置的类"""
     def __init__(self):
         """初始化游戏的静态设置"""
     
         '''游戏设置'''
-    
+
+        #是否开启Debug模式
+        self.Debug = True#False
         #游戏最高帧率
         self.hightest_FPS = 80
         #游戏最高分数据存储文件名
         self.hightest_score_filename = "saves/hightest_score.awr"
         #游戏最高分图片
-        self.hightest_score_image = pygame.image.load\
-                                        ("images/hightest_score.png")
+        self.hightest_score_image = pygame.image.load("images/hightest_score.png")
         #游戏分数图片
         self.score_image = pygame.image.load("images/scores.png")
         #游戏标题图片
@@ -201,6 +202,7 @@ class Settings():
                                        ("images/enemy3_down6.png"))
     
         self.initialize_dynamic_settings()
+    
     def initialize_dynamic_settings(self):
         """初始化随游戏进行而变化的设置"""
         
@@ -237,14 +239,16 @@ class Settings():
         self.bullet_line = 1
         
         '''道具设置'''
-        
+
+        ##道具1——伤害增加
+        ##道具2——发射子弹列数增加
         #道具1移动速度
         self.ufo1_speed_factor = 0.5
-        #道具2移动速度
+        #道具2效果移动速度
         self.ufo2_speed_factor = 0.5
         #道具1持续时间
         self.ufo1_keeptime = 30
-        #道具2持续时间
+        #道具2效果持续时间
         self.ufo2_keeptime = 30
         
         '''敌飞船设置'''

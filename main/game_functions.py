@@ -9,7 +9,7 @@ from moudle.enemy import Enemy
 from moudle.ufo import Ufo
 
 spawn_enemy_ticks = shoot_ticks = spawn_ufo_ticks = 0
-def check_keydown(event, game_starts, sd, ship):
+def check_keydown(event, settings, game_starts, sd, ship):
     """检测键盘被按下"""
     #英雄机移动
     if event.key == pygame.K_a or event.key == pygame.K_LEFT:
@@ -22,6 +22,8 @@ def check_keydown(event, game_starts, sd, ship):
         ship.offset['move_down'] = ship.speed_factor
     #游戏处理
     if event.key == pygame.K_ESCAPE:
+        if not settings.Debug:
+            save(settings, game_starts)
         pygame.quit()
         exit() 
     #按空格暂停,按任意键恢复
@@ -30,6 +32,15 @@ def check_keydown(event, game_starts, sd, ship):
             game_starts.game_stop = not game_starts.game_stop
     elif game_starts.game_active and game_starts.game_stop:
         game_starts.game_stop = False
+    
+    #Debug模式各功能开启
+    if settings.Debug:
+        if event.key == pygame.K_n:     #不再出现敌人
+            game_starts.enemy_speed_factor1 = game_starts.enemy_speed_factor2 = 0xFFF
+        elif event.key == pygame.K_u:   #快速生成道具
+            settings.spawn_ufo_interval = 0x1E
+        elif event.key == pygame.K_i:   #增加大量生命值
+            game_starts.lifes = 0x7FF
     #按R键重新开始
     if event.key == pygame.K_r:
         game_starts.reset_game()
@@ -59,13 +70,13 @@ def check_events(settings, game_starts, sd, ship, buttons):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-            exit()
+            exit(0)
         #检测鼠标按下
         if event.type == pygame.MOUSEBUTTONDOWN:
             button_active(mouse_x, mouse_y, game_starts, sd, buttons, ship)
         #监听键盘被按下
         if event.type == pygame.KEYDOWN:
-            check_keydown(event, game_starts, sd, ship)
+            check_keydown(event, settings, game_starts, sd, ship)
         #监听键盘空闲
         elif event.type == pygame.KEYUP:
             check_keyup(event, ship)
@@ -97,10 +108,10 @@ def button_active(mouse_x, mouse_y, game_starts, sd, buttons, ship):
                 ship.center_ship()
                 sd.prep_score()
                 sd.prep_life()
-            elif button.ID == 1 and button.stop_blit == game_starts.game_stop:
-                        game_starts.game_stop = True
-            elif button.ID == 2 and button.stop_blit == game_starts.game_stop:
-                game_starts.game_stop = False
+#            elif button.ID == 1 and button.stop_blit == game_starts.game_stop:
+#                        game_starts.game_stop = True
+#            elif button.ID == 2 and button.stop_blit == game_starts.game_stop:
+#                game_starts.game_stop = False
             
 def is_ActionTime(ticks, interval):
     """检测时间间隔"""
@@ -172,7 +183,7 @@ def spawn_ufo(settings, game_starts, screen, ufos):
         new_ufo2=Ufo(settings, game_starts, screen, randint, 2)
         ufos.add(new_ufo2)
     spawn_ufo_ticks = 0 #重置道具生成时间索引
-        
+
 def check_collide(settings, game_starts, hero, enemies, down_enemies, 
                   bullets, ufos, active_ufos):
     """碰撞检测"""
@@ -191,33 +202,43 @@ def check_collide(settings, game_starts, hero, enemies, down_enemies,
             enemy.been_hit = True
             enemy.hit_ticks = 0
     #检测飞船是否与道敌机发生了碰撞
-    hm_collisions = pygame.sprite.spritecollide(hero, enemies, True)
-    for enemy in hm_collisions:
-        #若碰撞，删除敌机，播放敌机爆炸动画，飞船生命值减1
-        down_enemies.add(enemy)
-        if not hero.Invincible:
-            hero.Invincible = True
-            game_starts.lifes -= 1
-            if game_starts.lifes <= 0:
-                game_starts.game_active = False
-                game_starts.game_stop = True
-                game_starts.game_over = True
-                save(settings, game_starts)
+#   hm_collisions = pygame.sprite.groupcollide(hero.rects, enemies, False, True)
+#   for enemy in hm_collisions:
+    for h_rect in hero.rects:
+        for enemy in [enemy for enemy in enemies.sprites() if h_rect.colliderect(enemy.rect)]:
+            #若碰撞，删除敌机，播放敌机爆炸动画，飞船生命值减1，设置飞船无敌状态，重置无敌时间
+            enemy.kill()
+            down_enemies.add(enemy)
+            if not hero.Invincible:
+                hero.Invincible = True
+                hero.Invincible_time = game_starts.ship_Invincible_time * 7
+                game_starts.lifes -= 1
+                if game_starts.lifes <= 0:
+                    game_starts.game_active = False
+                    game_starts.game_stop = True
+                    game_starts.game_over = True
+                    save(settings, game_starts)
     #检测飞船是否与道具发生了碰撞
-    hu_collisions = pygame.sprite.spritecollide(hero, ufos, True)
-    for ufo in hu_collisions:
-        #若碰撞，检测是否有已激活的相同种道具
-        same_ufos = [same_ufo for same_ufo in active_ufos 
-                     if same_ufo.type == ufo.type]
-        if same_ufos:
-            #若有已激活的相同种道具,重置被效果更改后的设置,并删除相同的道具,启动与飞船碰撞的道具效果
-            for same_ufo in same_ufos:
-                same_ufo.reset(game_starts)
-                same_ufo.kill()
-                active_ufos.add(ufo)
-        else:
-            #若没有已激活的相同种道具,启动与飞船碰撞的道具效果
+#    hu_collisions = pygame.sprite.spritecollide(hero, ufos, True)
+#    for ufo in hu_collisions:
+    for h_rect in hero.rects:
+        for ufo in [ufo for ufo in ufos if h_rect.colliderect(ufo.rect)]:
+            #若碰撞，检测是否有已激活的相同种道具
+            same_ufos = [same_ufo for same_ufo in active_ufos 
+                        if same_ufo.type == ufo.type]
+            ufo.kill()
             active_ufos.add(ufo)
+            """
+            if same_ufos:
+                #若有已激活的相同种道具,重置被效果更改后的设置,并删除相同的道具,启动与飞船碰撞的道具效果
+                for same_ufo in same_ufos:
+                    same_ufo.reset(game_starts)
+                    same_ufo.kill()
+                    active_ufos.add(ufo)
+            else:
+                #若没有已激活的相同种道具,启动与飞船碰撞的道具效果
+                active_ufos.add(ufo)
+            """
         
 def surface(settings, game_starts, screen, bg, hero, bullets, enemies, 
             down_enemies, ufos, active_ufos, sd, buttons):
@@ -246,6 +267,7 @@ def surface(settings, game_starts, screen, bg, hero, bullets, enemies,
     #限制游戏运行速率
     pygame.time.Clock().tick(game_starts.hightest_ticks 
                              * game_starts.rander_speed)
+
 def update(game_starts, bg, hero, bullets, 
            enemies, down_enemies, ufos, active_ufos):
     """调用各个Sprite及Group的update方法"""
@@ -280,7 +302,7 @@ def set_PFS(settings, game_starts, screen, FPS):
         game_starts.hightest_ticks -= 5
         
 def save(settings, game_starts):
-    """存档"""
+    """保存最高分"""
     filename = settings.hightest_score_filename
     try:
         with open(filename) as h_sco:
@@ -292,7 +314,7 @@ def save(settings, game_starts):
             else:
                 game_starts.hightest_score = int(game_starts.scores)
     except FileNotFoundError:
-        with open(filename,'w') as h_sco:
+        with open(filename, 'w') as h_sco:
             h_sco.write(str(int(game_starts.scores)))
         game_starts.hightest_score = int(game_starts.scores)
         
